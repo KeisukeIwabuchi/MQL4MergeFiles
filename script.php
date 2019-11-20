@@ -1,5 +1,22 @@
 <?php
 
+$data_types = [
+  'char',
+  'short',
+  'int',
+  'long',
+  'uchar',
+  'ushort',
+  'uint',
+  'ulong',
+  'bool',
+  'string',
+  'double',
+  'float',
+  'color',
+  'datetime',
+];
+
 $file_name = $argv[1];
 $directory_pos = GetDirectoryPos($argv[1]);
 $contents = GetContents($file_name);
@@ -24,9 +41,10 @@ while (strpos($contents, '#include') !== false) {
   }
 }
 
+$new_file_name = str_replace('.mq4', '_merge.mq4', $argv[1]);
+file_put_contents($new_file_name, $contents);
 
-
-echo $contents;
+echo $new_file_name;
 
 
 function GetDirectoryPos(string $path): string
@@ -63,18 +81,24 @@ function GetContents(string $file_name): string
   while ($line = fgets($fh)) {
     $line = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $line);
     $contents .= $line . "\n";
-
-    // if (strpos($line, '#include') !== false) {
-    //   $start = strpos($line, '<') + 1;
-    //   $end = strpos($line, '>');
-    //   $length = $end - $start;
-    //   $file_name = substr($line, $start, $length);
-
-    //   echo $file_name . "\n";
-    // }
   }
 
   fclose($fh);
 
   return $contents;
+}
+
+
+function GetFunction(string $line): mixed
+{
+  $pos = strpos($line, ' ');
+  if ($pos === false) {
+    return false;
+  }
+
+  $is_member_function = strpos($line, '::');
+  if ($is_member_function !== 0) {
+    $end = strpos($line, '(');
+    return substr($line, $pos + 1, $end);
+  }
 }
